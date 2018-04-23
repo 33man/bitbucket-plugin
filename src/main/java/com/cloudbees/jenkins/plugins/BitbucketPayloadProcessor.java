@@ -73,7 +73,13 @@ public class BitbucketPayloadProcessor {
         if (repo.getJSONObject("links").getJSONArray("self").size() != 0) {
             try {
                 URL pushHref = new URL(repo.getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href"));
-                url = pushHref.toString().replaceFirst(new String("projects.*"), new String(repo.getString("fullName").toLowerCase()));
+                if(pushHref.toString().contains("projects")) {
+                    url = pushHref.toString().replaceFirst(new String("projects.*"), new String(repo.getString("fullName").toLowerCase()));
+                }
+                if(pushHref.toString().contains("users")) {
+                    url = pushHref.toString().replaceFirst(new String("users.*"), new String(repo.getString("fullName").toLowerCase()));
+                }
+
                 String scm = repo.has("scmId") ? repo.getString("scmId") : "git";
                 probe.triggerMatchingJobs(user, url, scm, payload.toString());
             } catch (MalformedURLException e) {

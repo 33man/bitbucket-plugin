@@ -88,6 +88,32 @@ public class BitbucketPayloadProcessorTest {
     }
 
     @Test
+    public void processUserWebhookPayloadBitBucketServer() {
+        when(request.getHeader("user-agent")).thenReturn("Apache-HttpClient/4.5.1 (Java/1.8.0_102)");
+        when(request.getHeader("x-event-key")).thenReturn("repo:push");
+
+        String user = "test_user";
+        String url = "https://bitbucket.org/~ausername/test_repo";
+
+        JSONObject href = new JSONObject();
+        href.element("href", "https://bitbucket.org/users/ausername/repos/test_repo/browse");
+
+        // Set actor and repository so that payload processor will parse as Bitbucket Server Post Webhook payload
+        JSONObject payload = new JSONObject()
+            .element("actor", new JSONObject()
+                .element("username", user))
+            .element("repository", new JSONObject()
+                .element("links", new JSONObject()
+                    .element("self", new JSONArray()
+                        .element(href)))
+                .element("fullName",  "~ausername/test_repo"));
+
+        payloadProcessor.processPayload(payload, request);
+
+        verify(probe).triggerMatchingJobs(user, url, "git", payload.toString());
+    }
+
+    @Test
     public void testProcessPostServicePayload() {
         // Ensure header isn't set so that payload processor will parse as old POST service payload
         when(request.getHeader("user-agent")).thenReturn(null);
